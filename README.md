@@ -23,6 +23,6 @@ Steps are the following:
 ## How to customize program to run (memory.vhd)
 If you want to customize the program to be run on this design, you should follow the next steps:
 1. Compile the RISC-V GNU toolchain. Follow the istructions provided in this repo [RISC-V GNU toolchain](https://github.com/riscv/riscv-gnu-toolchain). Use the following flags when configuring:
-  1. --prefix=/opt/riscv
-  2. --with-arch=rv32i
-  3. --with-abi=ilp32
+  1.1. --prefix=/opt/riscv
+  1.2. --with-arch=rv32i
+  1.3. --with-abi=ilp32
