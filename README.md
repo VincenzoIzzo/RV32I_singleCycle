@@ -34,11 +34,11 @@ If you want to customize the program to be run on this design, you should follow
 6. Put the istructions in the memory.vhd file following the example implementation. "0 => x"130101FE" means that the machine code exadecimal 130101FE is going to be put into the first memory word (bytes 0,1,2 and 3)
 7. Follow simulation steps discussed above
 
-## How to run on ZYBO board
-1. Add the costraint file present in this repo to your project
+## How to run on ZYBO board (or another board, just customize the right things)
+1. Add the costraint file present in this repo to your project. You can customize this file for your target board.
 2. Exclude "top_tb.vhd" file from the synthesis/implementation files.
-3. Choose which signal you want to see on the 4 leds. By default you see the memory content which is going to be written with value "5". To modify what is going to be mapped on leds you have to follow these steps:
-    1. Add an output signal (STD_LOGIC_VECTOR(3 downto 0)) to the internal module you are interested in
+3. Choose which signal you want to see on the 4 leds. By default you see the memory content which is going to be written with value "5". If you have a board with more leds you can customize the "test_out" and "dbg_data_signal" signals width in "top.vhd" module.  To modify what is going to be mapped on leds you have to follow these steps:
+    1. Add an output signal (STD_LOGIC_VECTOR(3 downto 0)) to the internal module you are interested in, or choose the width according to the number of leds
     2. Assign the internal signals you want to watch to the output signal discussed in the previous point
     3. Update the component interface in the "top.vhd" module
     4. Portmap the new output signal to dbg_data_signal
