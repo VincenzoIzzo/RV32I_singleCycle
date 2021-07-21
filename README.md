@@ -1,5 +1,5 @@
 # RV32I_singleCycle
-This is a custom behavioral implementation (in VHDL) of RV32I (RISC-V) specification  istruction set (in developing). Currently there are 33/40 istructions implemented (arithmetic, logic, store, load, conditional branch istructions)
+This is a custom behavioral implementation (in VHDL) of RV32I (RISC-V) specification  istruction set (in developing). Currently there are 34/40 istructions implemented (arithmetic, logic, store, load, conditional branch and JAL istructions)
 
 
 ## How to simulate (top_tb.vhd)
@@ -10,7 +10,7 @@ int main() {
   int a = 2;
   int b = 3;
   int c = a + b;
-  while(c==5);
+  while(1);
   return 0;
 }
 ```
@@ -27,7 +27,7 @@ If you want to customize the program to be run on this design, you should follow
     1. --prefix=/opt/riscv
     2. --with-arch=rv32i
     3. --with-abi=ilp32
-2. Write a simple and short C program (without any unconditional jumps or functions). Be carefull about overlapping of code area and stack, because, currently, memory support just 256 bytes (a maximum of 64 data+istruction words). NB: always finish the program with a "while(true condition);", where true condition involves a conditional branch, so that the Program Counter doesn't acquire wrong values after the running program. Return istruction has to be avoided, since there isn't an operating environment (or it can be put after the while istruction, so that the processor will never run the return istruction)
+2. Write a simple and short C program. Be carefull about overlapping of code area and stack, because, currently, memory support just 256 bytes (a maximum of 64 data+istruction words). NB: always finish the program with a "while(true condition);", so that the Program Counter doesn't acquire wrong values after the running program. Return istruction has to be avoided, since there isn't an operating environment (or it can be put after the while istruction, so that the processor will never run the return istruction)
 3. ```riscv32-unknown-elf-gcc -c file.c```
 4. ```riscv32-unknown-elf-objcopy -O -ihex file.o file.hex```
 5. Study here the [hex format](https://en.wikipedia.org/wiki/Intel_HEX) and extract the machine code istructions
