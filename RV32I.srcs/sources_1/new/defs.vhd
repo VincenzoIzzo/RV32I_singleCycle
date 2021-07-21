@@ -82,6 +82,16 @@ package defs is
   subtype S_imm_0 is STD_LOGIC_VECTOR(11 downto 7);
   subtype S_opcode is STD_LOGIC_VECTOR(6 downto 0);
   
+  -- istructions format B
+  constant B_imm_12 : natural := 31;
+  subtype B_imm_10_5 is STD_LOGIC_VECTOR(30 downto 25);
+  subtype B_rs2 is STD_LOGIC_VECTOR(24 downto 20);
+  subtype B_rs1 is STD_LOGIC_VECTOR(19 downto 15);
+  subtype B_funct3 is STD_LOGIC_VECTOR(14 downto 12);
+  subtype B_imm_4_1 is STD_LOGIC_VECTOR(11 downto 8);
+  constant B_imm_11 : natural := 7;
+  subtype B_opcode is STD_LOGIC_VECTOR(6 downto 0);
+  
   subtype x_funct3 is STD_LOGIC_VECTOR(14 downto 12);
   
   constant select_imm_reg_arit : natural := 5;

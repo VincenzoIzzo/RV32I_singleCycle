@@ -47,9 +47,8 @@ architecture Behavioral of register_file is
 
     
     signal register_space: register_space_t := (
---0 => "00000000000000000000000000000001",
---1 => "00000000000000000000000000000001",
   2 => "00000000000000000000000100000000", --sp = primo inidirizzo non esistente della 65-esima parola(256)
+  
 others => (others => '0')
     );
     

@@ -33,21 +33,22 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity ProgramCounter is
     Port ( clk : in STD_LOGIC;
-           PC : out STD_LOGIC_VECTOR (XLEN-1 downto 0));
+           new_PC_in : in STD_LOGIC_VECTOR (XLEN-1 downto 0);
+           PC_out : out STD_LOGIC_VECTOR (XLEN-1 downto 0));
 end ProgramCounter;
 
 architecture Behavioral of ProgramCounter is
 
     signal PC_value : STD_LOGIC_VECTOR (XLEN-1 downto 0) := PC_rst_val;
-    signal PC_new : STD_LOGIC_VECTOR(XLEN-1 downto 0) := (others => '0');
+    
 begin
 
-    PC <= PC_value;
-    PC_new <= std_logic_vector(to_unsigned(to_integer(unsigned(PC_value))+4,XLEN));
+    PC_out <= PC_value;
+    --PC_new <= std_logic_vector(to_unsigned(to_integer(unsigned(PC_value))+4,XLEN));
     process(clk)
     begin
         if(rising_edge(clk)) then
-            PC_value <= PC_new;
+            PC_value <= new_PC_in;
         end if;
     end process;
 

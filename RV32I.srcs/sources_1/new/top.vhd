@@ -50,7 +50,11 @@ architecture Behavioral of top is
         Port (istruction_in : in STD_LOGIC_VECTOR(XLEN-1 downto 0);
               ctrl_signal: out STD_LOGIC_VECTOR(9 downto 0);
               mem_write_en: out STD_LOGIC;
-              mem_RF_en: out STD_LOGIC
+              mem_RF_en: out STD_LOGIC;
+              beq: in STD_LOGIC;
+              blt: in STD_LOGIC;
+              bltu: in STD_LOGIC;
+              branch_yes: out STD_LOGIC
               );
     end component;
 
@@ -61,13 +65,14 @@ architecture Behavioral of top is
                data_read : out STD_LOGIC_VECTOR (XLEN-1 downto 0);
                enable_d_w : in STD_LOGIC;
                istr_read : out STD_LOGIC_VECTOR (XLEN-1 downto 0);
-               dbg_data: out STD_LOGIC_VECTOR(3 downto 0);
+              -- dbg_data: out STD_LOGIC_VECTOR(3 downto 0);
                clk : in STD_LOGIC);
     end component;
 
     component ProgramCounter is
         Port ( clk : in STD_LOGIC;
-               PC : out STD_LOGIC_VECTOR (XLEN-1 downto 0));
+               new_PC_in : in STD_LOGIC_VECTOR (XLEN-1 downto 0);
+               PC_out : out STD_LOGIC_VECTOR (XLEN-1 downto 0));
     end component;
     
     component register_file is
@@ -85,11 +90,29 @@ architecture Behavioral of top is
         Port ( src1 : in STD_LOGIC_VECTOR (XLEN-1 downto 0);
                src2 : in STD_LOGIC_VECTOR (XLEN-1 downto 0);
                dest : out STD_LOGIC_VECTOR (XLEN-1 downto 0);
+               beq: out STD_LOGIC;
+               blt: out STD_LOGIC;
+               bltu: out STD_LOGIC;
                ctrl_signal: in STD_LOGIC_VECTOR(9 downto 0));
     end component;
 
+    component adder is
+        Port ( op1 : in STD_LOGIC_VECTOR (XLEN-1 downto 0);
+               op2 : in STD_LOGIC_VECTOR (XLEN-1 downto 0);
+               ris : out STD_LOGIC_VECTOR (XLEN-1 downto 0);
+               carry_out : out STD_LOGIC);
+    end component;
+
+    signal beq_signal : STD_LOGIC;
+    signal blt_signal : STD_LOGIC;
+    signal bltu_signal : STD_LOGIC;
     
-    signal PC_signal : STD_LOGIC_VECTOR (XLEN-1 downto 0);
+    
+    signal new_PC_in_signal : STD_LOGIC_VECTOR (XLEN-1 downto 0);
+    signal PC_out_signal : STD_LOGIC_VECTOR (XLEN-1 downto 0);
+    signal carry_out_PC_signal : STD_LOGIC;
+    signal mux_PC_ctrl: STD_LOGIC := '0';
+    signal PC_adder_op2_signal: STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal le_istruction: STD_LOGIC_VECTOR (XLEN-1 downto 0); --little endian
     signal be_istruction : STD_LOGIC_VECTOR (XLEN-1 downto 0); --big endian
     
@@ -108,7 +131,7 @@ architecture Behavioral of top is
     signal ALU_src2 : STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal imm_extended : STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal imm_splitted_store : STD_LOGIC_VECTOR (11 downto 0);
-    
+    signal imm_splitted_branch : STD_LOGIC_VECTOR (12 downto 0);
     signal filtered_clock: STD_LOGIC;
     
     --mem data address
@@ -133,18 +156,25 @@ filt: clk_filter port map(clk_in => ext_clk,
                               clk_out => filtered_clock 
                               );
                               
-    mem: memory port map(istr_address => PC_signal,
+    mem: memory port map(istr_address => PC_out_signal,
                          data_address => data_address_signal,
                          data_write => le_data_mem_write_signal,
                          data_read => le_data_mem_signal,
                          enable_d_w => mem_write_en_signal, 
                          istr_read => le_istruction,
-                         dbg_data => dbg_data_signal,
+                         --dbg_data => dbg_data_signal,
                          clk => filtered_clock
                          );
                          
     PC: ProgramCounter port map(clk => filtered_clock,
-                                PC => PC_signal);
+                                new_PC_in => new_PC_in_signal,
+                                PC_out => PC_out_signal);
+    
+    PC_adder: adder port map(op1 => PC_out_signal,
+                             op2 => PC_adder_op2_signal,
+                             ris => new_PC_in_signal,
+                             carry_out => carry_out_PC_signal
+                             );
                                 
     RF: register_file port map(src1_index => be_istruction(R_rs1'range),
                                src2_index => be_istruction(R_rs2'range),
@@ -158,22 +188,30 @@ filt: clk_filter port map(clk_in => ext_clk,
     my_alu: ALU port map(src1 => src1_RF_signal,
                       src2 => ALU_src2,
                       dest => ALU_result,
+                      beq => beq_signal,
+                      blt => blt_signal,
+                      bltu => bltu_signal,
                       ctrl_signal => ctrl_signal_sig
                        
                          );
     CU: control_unit port map(istruction_in  => be_istruction,
                        ctrl_signal => ctrl_signal_sig,
                        mem_write_en => mem_write_en_signal,
-                       mem_RF_en => mem_RF_en_signal
+                       mem_RF_en => mem_RF_en_signal,
+                       beq => beq_signal,
+                       blt => blt_signal,
+                       bltu => bltu_signal,
+                       branch_yes => mux_PC_ctrl
                                 );
     --test
     test_out <= dbg_data_signal;
-    
+    dbg_data_signal <= PC_out_signal(5 downto 2);
     
     data_address_signal <= ALU_result;
     
     --immediate value sign extension 
     imm_splitted_store <= be_istruction(S_imm_1'range)&be_istruction(S_imm_0'range);
+    
     
     immediate_construction: process(be_istruction, imm_splitted_store)
     begin 
@@ -184,6 +222,10 @@ filt: clk_filter port map(clk_in => ext_clk,
         end if;
     end process;
      
+    imm_splitted_branch <= be_istruction(B_imm_12)&be_istruction(B_imm_11)&be_istruction(B_imm_10_5'range)&be_istruction(B_imm_4_1'range)&'0';
+    
+    
+    
     
     --istruction little endian to bigendian conversion
     be_istruction(XLEN-1 downto 24) <= le_istruction(7 downto 0);
@@ -204,7 +246,7 @@ filt: clk_filter port map(clk_in => ext_clk,
     le_data_mem_write_signal(7 downto 0) <= poststore_be_data_mem_signal(31 downto 24);
     
     --changing read value from memory in order to store a variation
-    store_type: process(be_data_mem_signal, be_istruction(x_funct3'range), data_address_signal(1 downto 0))
+    store_type: process(be_data_mem_signal, be_istruction(x_funct3'range), data_address_signal(1 downto 0), src2_RF_signal)
         variable byte_offset : integer;
         variable half_offset : integer;
     begin
@@ -268,13 +310,18 @@ filt: clk_filter port map(clk_in => ext_clk,
     
     
     --mux which decide if rs2 is a register or immediate in istruction, based on bit5-4 in opcode
-    mux_imm_reg_arit: process(imm_extended, src2_RF_signal, be_istruction(5 downto 4))
+    mux_imm_reg_arit: process(imm_extended, src2_RF_signal, be_istruction(6 downto 4))
     begin
-        if(be_istruction(5) = '1' and be_istruction(4) = '1') then --alu istruction reg-to-reg
+        if(be_istruction(6) = '0') then  --no branch
+            if(be_istruction(5) = '1' and be_istruction(4) = '1') then --alu istruction reg-to-reg
+                ALU_src2 <= src2_RF_signal;
+            else
+                ALU_src2 <= imm_extended;
+            end if;
+        else       -- branch
             ALU_src2 <= src2_RF_signal;
-        else
-            ALU_src2 <= imm_extended;
         end if;
+        
     end process;
     
     --mux which decide if data to be written in RF is from memory(LOAD) or from ALU(add ecc) based on bit4 in opcode
@@ -285,6 +332,16 @@ filt: clk_filter port map(clk_in => ext_clk,
         else
             dest_RF_signal <= val_to_load_in_RF;
         end if;
+    end process;
+    
+    mux_pc_adder_op2: process(mux_PC_ctrl, imm_splitted_branch)
+    begin 
+        if(mux_PC_ctrl = '0') then --no branch
+            PC_adder_op2_signal <= "00000000000000000000000000000100";
+        else                       --branch
+            PC_adder_op2_signal <= std_logic_vector(resize(signed(imm_splitted_branch), XLEN)); 
+        end if;                     
+    
     end process;
     
 end Behavioral;

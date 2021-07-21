@@ -43,7 +43,7 @@ entity memory is
            data_read : out STD_LOGIC_VECTOR (XLEN-1 downto 0);
            enable_d_w : in STD_LOGIC;
            istr_read : out STD_LOGIC_VECTOR (XLEN-1 downto 0);
-           dbg_data: out STD_LOGIC_VECTOR(3 downto 0);
+           --dbg_data: out STD_LOGIC_VECTOR(3 downto 0);
            clk : in STD_LOGIC);
 end memory;
 
@@ -62,11 +62,15 @@ architecture Behavioral of memory is
 8 => x"832784FE",
 9 => x"B307F700",
 10 => x"2322F4FE",
-11 => x"93070000",
-12 => x"13850700",
-13 => x"0324C101",
-14 => x"13010102",
---15 => x"", return 
+11 => x"13000000",
+12 => x"032744FE",
+13 => x"93075000",
+14 => x"E30CF7FE",
+15 => x"93070000",
+16 => x"13850700",
+17 => x"0324C101",
+18 => x"13010102",
+--19 => x"", return 
 
 -- others
 others => (others => '1')
@@ -75,7 +79,7 @@ others => (others => '1')
     signal al_data_address : STD_LOGIC_VECTOR (5 downto 0);
     
 begin
-    dbg_data <= memory_space(57)(27 downto 24);
+    --dbg_data <= memory_space(57)(27 downto 24);
     
     
     --memory grows up-down with increasing address
