@@ -116,6 +116,7 @@ architecture Behavioral of top is
     signal carry_out_PC_plus_4_signal : STD_LOGIC;
     signal mux_PC_ctrl_cond: STD_LOGIC;
     signal mux_PC_ctrl_uncond: STD_LOGIC;
+    signal PC_adder_op1_signal: STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal PC_adder_op2_signal: STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal le_istruction: STD_LOGIC_VECTOR (XLEN-1 downto 0); --little endian
     signal be_istruction : STD_LOGIC_VECTOR (XLEN-1 downto 0); --big endian
@@ -175,7 +176,7 @@ filt: clk_filter port map(clk_in => ext_clk,
                                 new_PC_in => new_PC_in_signal,
                                 PC_out => PC_out_signal);
     
-    PC_adder: adder port map(op1 => PC_out_signal,
+    PC_adder: adder port map(op1 => PC_adder_op1_signal,
                              op2 => PC_adder_op2_signal,
                              ris => new_PC_in_signal,
                              carry_out => carry_out_PC_signal
@@ -338,7 +339,7 @@ filt: clk_filter port map(clk_in => ext_clk,
     --mux which decide if data to be written in RF is from memory(LOAD) or from ALU(add ecc) based on bit4 in opcode
     mux_rfw_mem_alu: process(val_to_load_in_RF, ALU_result, be_istruction(6 downto 2), PC_plus_4_signal)
     begin
-        if(be_istruction(6) = '1' and be_istruction(3) = '1' and be_istruction(2) = '1') then --unconditional branch
+        if(be_istruction(6) = '1' and be_istruction(2) = '1') then --JAL AND JALR
                 dest_RF_signal <= PC_plus_4_signal;
         else --no branch
             if(be_istruction(4) = '1') then
@@ -350,18 +351,35 @@ filt: clk_filter port map(clk_in => ext_clk,
         
     end process;
     
-    mux_pc_adder_op2: process(mux_PC_ctrl_cond, mux_PC_ctrl_uncond, imm_splitted_branch, imm_splitted_jump)
+    mux_pc_adder_op2: process(mux_PC_ctrl_cond, mux_PC_ctrl_uncond, imm_splitted_branch, imm_splitted_jump, be_istruction(3))
     begin 
         if(mux_PC_ctrl_cond = '0' and mux_PC_ctrl_uncond = '0') then --no branch
             PC_adder_op2_signal <= "00000000000000000000000000000100";
         elsif(mux_PC_ctrl_cond = '1' and mux_PC_ctrl_uncond = '0') then  --conditional branch
             PC_adder_op2_signal <= std_logic_vector(resize(signed(imm_splitted_branch), XLEN));
         elsif(mux_PC_ctrl_cond = '0' and mux_PC_ctrl_uncond = '1') then --unconditional branch
-            PC_adder_op2_signal <= std_logic_vector(resize(signed(imm_splitted_jump), XLEN));
+            if(be_istruction(3) = '1') then --jal
+                PC_adder_op2_signal <= std_logic_vector(resize(signed(imm_splitted_jump), XLEN));
+            else                -- jalr
+                PC_adder_op2_signal <= std_logic_vector(resize(signed(be_istruction(I_imm'range)), XLEN));
+            end if;
         else
             PC_adder_op2_signal <= "00000000000000000000000000000000";
         end if;                     
     
     end process;
+    
+    
+    --new pc value mux 
+    mux_pc_val: process(be_istruction(3), PC_out_signal, src1_RF_signal)
+    begin
+        if(be_istruction(6 downto 0) = "1100111") then --jalr
+            PC_adder_op1_signal <= src1_RF_signal;
+        else                          --no jalr
+            PC_adder_op1_signal <= PC_out_signal;
+        end if;
+        
+    
+    end process; 
     
 end Behavioral;

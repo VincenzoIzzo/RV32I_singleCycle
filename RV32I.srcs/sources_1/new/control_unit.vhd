@@ -66,7 +66,7 @@ begin
     process(istruction_in, beq, blt, bltu)
     begin
         if(istruction_in(6) = '1') then --branch istruction 
-            if(istruction_in(3) = '1' and istruction_in(2) = '1') then --unconditional
+            if(istruction_in(2) = '1') then --unconditional JAL AND JALR
                 branch_uncond_yes <= '1';
                 branch_cond_yes <= '0';
             else --conditional
@@ -109,7 +109,7 @@ begin
                 mem_RF_en <= '1';
             end if;
         else 
-            if(istruction_in(3) = '1' and istruction_in(2) = '1') then --JAL
+            if(istruction_in(2) = '1') then --JAL and JALR
                 mem_RF_en <= '1';
                 mem_write_en <= '0';
             else 
