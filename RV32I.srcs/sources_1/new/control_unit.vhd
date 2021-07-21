@@ -39,7 +39,8 @@ entity control_unit is
           beq: in STD_LOGIC;
           blt: in STD_LOGIC;
           bltu: in STD_LOGIC;
-          branch_yes: out STD_LOGIC
+          branch_cond_yes: out STD_LOGIC;
+          branch_uncond_yes: out STD_LOGIC
           );
 end control_unit;
 
@@ -65,25 +66,33 @@ begin
     process(istruction_in, beq, blt, bltu)
     begin
         if(istruction_in(6) = '1') then --branch istruction 
-            case funct3 is
+            if(istruction_in(3) = '1' and istruction_in(2) = '1') then --unconditional
+                branch_uncond_yes <= '1';
+                branch_cond_yes <= '0';
+            else --conditional
+                case funct3 is
                     when "000" =>   --beq
-                        branch_yes <= beq;
+                        branch_cond_yes <= beq;
                     when "001" =>   --bne
-                        branch_yes <= not(beq);
+                        branch_cond_yes <= not(beq);
                     when "100" =>   --blt
-                        branch_yes <= blt;
+                        branch_cond_yes <= blt;
                     when "101" =>   --bge
-                        branch_yes <= not(blt);
+                        branch_cond_yes <= not(blt);
                     when "110" =>   --bltu
-                        branch_yes <= bltu;
+                        branch_cond_yes <= bltu;
                     when "111" =>   --bgeu
-                        branch_yes <= not(bltu);
+                        branch_cond_yes <= not(bltu);
                         
                     when others =>
-                        branch_yes <= '0';
-            end case;
+                        branch_cond_yes <= '0';
+                end case;
+                branch_uncond_yes <= '0';
+            end if;
+            
         else                       --no branch istruction 
-            branch_yes <= '0';
+            branch_cond_yes <= '0';
+            branch_uncond_yes <= '0';
         end if;
     end process;
     
@@ -100,8 +109,14 @@ begin
                 mem_RF_en <= '1';
             end if;
         else 
-            mem_write_en <= '0';
-            mem_RF_en <= '0';
+            if(istruction_in(3) = '1' and istruction_in(2) = '1') then --JAL
+                mem_RF_en <= '1';
+                mem_write_en <= '0';
+            else 
+                mem_write_en <= '0';
+                mem_RF_en <= '0';
+            end if;
+            
         end if;
         
     end process;

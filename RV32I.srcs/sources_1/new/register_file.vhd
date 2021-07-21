@@ -60,7 +60,9 @@ begin
     begin
         if(rising_edge(clk)) then
             if(write_en = '1') then 
-                register_space(to_integer(unsigned(dest_index))) <= dest_write;
+                if(dest_index /= "00000") then
+                    register_space(to_integer(unsigned(dest_index))) <= dest_write;
+                end if;
             end if;
         end if;
     end process;

@@ -54,7 +54,8 @@ architecture Behavioral of top is
               beq: in STD_LOGIC;
               blt: in STD_LOGIC;
               bltu: in STD_LOGIC;
-              branch_yes: out STD_LOGIC
+              branch_cond_yes: out STD_LOGIC;
+              branch_uncond_yes: out STD_LOGIC
               );
     end component;
 
@@ -109,9 +110,12 @@ architecture Behavioral of top is
     
     
     signal new_PC_in_signal : STD_LOGIC_VECTOR (XLEN-1 downto 0);
+    signal PC_plus_4_signal : STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal PC_out_signal : STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal carry_out_PC_signal : STD_LOGIC;
-    signal mux_PC_ctrl: STD_LOGIC := '0';
+    signal carry_out_PC_plus_4_signal : STD_LOGIC;
+    signal mux_PC_ctrl_cond: STD_LOGIC;
+    signal mux_PC_ctrl_uncond: STD_LOGIC;
     signal PC_adder_op2_signal: STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal le_istruction: STD_LOGIC_VECTOR (XLEN-1 downto 0); --little endian
     signal be_istruction : STD_LOGIC_VECTOR (XLEN-1 downto 0); --big endian
@@ -132,6 +136,7 @@ architecture Behavioral of top is
     signal imm_extended : STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal imm_splitted_store : STD_LOGIC_VECTOR (11 downto 0);
     signal imm_splitted_branch : STD_LOGIC_VECTOR (12 downto 0);
+    signal imm_splitted_jump : STD_LOGIC_VECTOR (20 downto 0);
     signal filtered_clock: STD_LOGIC;
     
     --mem data address
@@ -175,7 +180,11 @@ filt: clk_filter port map(clk_in => ext_clk,
                              ris => new_PC_in_signal,
                              carry_out => carry_out_PC_signal
                              );
-                                
+    PC_plus_4_adder: adder port map(op1 => PC_out_signal,
+                             op2 => "00000000000000000000000000000100",
+                             ris => PC_plus_4_signal,
+                             carry_out => carry_out_PC_plus_4_signal
+                             );                    
     RF: register_file port map(src1_index => be_istruction(R_rs1'range),
                                src2_index => be_istruction(R_rs2'range),
                                dest_index => be_istruction(R_rd'range),
@@ -201,7 +210,8 @@ filt: clk_filter port map(clk_in => ext_clk,
                        beq => beq_signal,
                        blt => blt_signal,
                        bltu => bltu_signal,
-                       branch_yes => mux_PC_ctrl
+                       branch_cond_yes => mux_PC_ctrl_cond,
+                       branch_uncond_yes => mux_PC_ctrl_uncond
                                 );
     --test
     test_out <= dbg_data_signal;
@@ -223,6 +233,7 @@ filt: clk_filter port map(clk_in => ext_clk,
     end process;
      
     imm_splitted_branch <= be_istruction(B_imm_12)&be_istruction(B_imm_11)&be_istruction(B_imm_10_5'range)&be_istruction(B_imm_4_1'range)&'0';
+    imm_splitted_jump <= be_istruction(J_imm_20)&be_istruction(J_imm_19_12'range)&be_istruction(J_imm_11)&be_istruction(J_imm_10_1'range)&'0';
     
     
     
@@ -325,21 +336,30 @@ filt: clk_filter port map(clk_in => ext_clk,
     end process;
     
     --mux which decide if data to be written in RF is from memory(LOAD) or from ALU(add ecc) based on bit4 in opcode
-    mux_rfw_mem_alu: process(val_to_load_in_RF, ALU_result, be_istruction(4))
+    mux_rfw_mem_alu: process(val_to_load_in_RF, ALU_result, be_istruction(6 downto 2), PC_plus_4_signal)
     begin
-        if(be_istruction(4) = '1') then
-            dest_RF_signal <= ALU_result;
-        else
-            dest_RF_signal <= val_to_load_in_RF;
+        if(be_istruction(6) = '1' and be_istruction(3) = '1' and be_istruction(2) = '1') then --unconditional branch
+                dest_RF_signal <= PC_plus_4_signal;
+        else --no branch
+            if(be_istruction(4) = '1') then
+                dest_RF_signal <= ALU_result;
+            else
+                dest_RF_signal <= val_to_load_in_RF;
+            end if;
         end if;
+        
     end process;
     
-    mux_pc_adder_op2: process(mux_PC_ctrl, imm_splitted_branch)
+    mux_pc_adder_op2: process(mux_PC_ctrl_cond, mux_PC_ctrl_uncond, imm_splitted_branch, imm_splitted_jump)
     begin 
-        if(mux_PC_ctrl = '0') then --no branch
+        if(mux_PC_ctrl_cond = '0' and mux_PC_ctrl_uncond = '0') then --no branch
             PC_adder_op2_signal <= "00000000000000000000000000000100";
-        else                       --branch
-            PC_adder_op2_signal <= std_logic_vector(resize(signed(imm_splitted_branch), XLEN)); 
+        elsif(mux_PC_ctrl_cond = '1' and mux_PC_ctrl_uncond = '0') then  --conditional branch
+            PC_adder_op2_signal <= std_logic_vector(resize(signed(imm_splitted_branch), XLEN));
+        elsif(mux_PC_ctrl_cond = '0' and mux_PC_ctrl_uncond = '1') then --unconditional branch
+            PC_adder_op2_signal <= std_logic_vector(resize(signed(imm_splitted_jump), XLEN));
+        else
+            PC_adder_op2_signal <= "00000000000000000000000000000000";
         end if;                     
     
     end process;

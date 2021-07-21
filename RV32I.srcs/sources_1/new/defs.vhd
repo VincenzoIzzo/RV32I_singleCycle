@@ -92,6 +92,14 @@ package defs is
   constant B_imm_11 : natural := 7;
   subtype B_opcode is STD_LOGIC_VECTOR(6 downto 0);
   
+  -- istructions format J
+  constant J_imm_20 : natural := 31;
+  subtype J_imm_10_1 is STD_LOGIC_VECTOR(30 downto 21);
+  constant J_imm_11 : natural := 20;
+  subtype J_imm_19_12 is STD_LOGIC_VECTOR(19 downto 12);
+  subtype J_rd is STD_LOGIC_VECTOR(11 downto 7);
+  subtype J_opcode is STD_LOGIC_VECTOR(6 downto 0);
+  
   subtype x_funct3 is STD_LOGIC_VECTOR(14 downto 12);
   
   constant select_imm_reg_arit : natural := 5;
