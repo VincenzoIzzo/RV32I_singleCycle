@@ -18,7 +18,7 @@ Steps are the following:
 1. Create a project with all VHDL files in the repository
 2. Verify that in clk_filter.vhd file the statement "clk_out <= clk_in;" is present and "clk_out <= internal_counter(27);" is commented
 3. In the file "defs.vhd" you can change the number of "clk_periods" you want to run
-5. You can check internal component state by enabling them into your wave simulation tool
+4. You can check internal component state by enabling them into your wave analyzer tool
 
 
 ## How to customize program to run (memory.vhd)
