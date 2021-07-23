@@ -28,10 +28,11 @@ If you want to customize the program to be run on this design, you should follow
     2. --with-arch=rv32i
     3. --with-abi=ilp32
 2. Write a simple and short C program. Be carefull about overlapping of code area and stack, because, currently, memory support just 256 bytes (a maximum of 64 data+istruction words). NB: always finish the program with a "while(true condition);", so that the Program Counter doesn't acquire wrong values after the running program. Return istruction has to be avoided, since there isn't an operating environment (or it can be put after the while istruction, so that the processor will never run the return istruction)
-3. ```riscv32-unknown-elf-gcc -c file.c```
-4. ```riscv32-unknown-elf-objcopy -O -ihex file.o file.hex```
-5. Study here the [hex format](https://en.wikipedia.org/wiki/Intel_HEX) and extract the machine code istructions
-6. Put the istructions in the memory.vhd file following the example implementation. "0 => x"130101FE" means that the machine code exadecimal 130101FE is going to be put into the first memory word (bytes 0,1,2 and 3)
+3. ```riscv32-unknown-elf-gcc -c my_file.c```
+4. ```riscv32-unknown-elf-objcopy -O -ihex my_file.o my_file.hex```
+5. ```python3 updateMemContent.py my_file.hex memory.vhd "row_start_number" "row_end_number" memoutputfile.vhd``` 
+row_start_number and row_end_number are the lines in which there are     ```    signal memory_space: memory_space_t := (``` and the closing bracket ```);```. For example you can put 52 and 81.
+6. Add the new memory file to the project. The script generates a new file in order to avoid possible wrong uses. If you are sure that you have done the right thing checking the new generated memory file, you can delete the old "memory.vhd" file.
 7. Follow simulation steps discussed above
 
 ## How to run on ZYBO board (or another board, just customize the right things)
