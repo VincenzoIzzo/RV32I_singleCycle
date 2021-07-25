@@ -27,7 +27,7 @@ If you want to customize the program to be run on this design, you should follow
     1. --prefix=/opt/riscv
     2. --with-arch=rv32i
     3. --with-abi=ilp32
-2. Write a simple and short C program. Be carefull about overlapping of code area and stack, because, currently, memory support just 256 bytes (a maximum of 64 data+istruction words). NB: always finish the program with a "while(true condition);", so that the Program Counter doesn't acquire wrong values after the running program. Return istruction has to be avoided, since there isn't an operating environment (or it can be put after the while istruction, so that the processor will never run the return istruction)
+2. Write a C program. Be carefull about overlapping of code area and stack, because, currently, memory support just 4096 bytes (a maximum of 1024 data+istruction words). NB: always finish the program with a "while(true condition);", so that the Program Counter doesn't acquire wrong values after the running program. Return istruction has to be avoided, since there isn't an operating environment (or it can be put after the while istruction, so that the processor will never run the return istruction)
 3. ```riscv32-unknown-elf-gcc -c my_file.c```
 4. ```riscv32-unknown-elf-objcopy -O -ihex my_file.o my_file.hex```
 5. ```python3 updateMemContent.py my_file.hex memory.vhd "row_start_number" "row_end_number" memoutputfile.vhd``` 
