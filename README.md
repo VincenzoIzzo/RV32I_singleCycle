@@ -1,5 +1,5 @@
 # RV32I_singleCycle
-This is a custom behavioral implementation (in VHDL) of RV32I (RISC-V) specification  istruction set (in developing). Currently there are 35/40 istructions implemented (arithmetic, logic, store, load, conditional branch and JAL/JALR istructions)
+This is a custom behavioral implementation (in VHDL) of RV32I specification instruction set (in developing). Currently there are 37/40 instructions implemented (arithmetic, logic, store, load, conditional branch , unconditional branch and upper immediate instructions).
 
 
 ## How to simulate (top_tb.vhd)
