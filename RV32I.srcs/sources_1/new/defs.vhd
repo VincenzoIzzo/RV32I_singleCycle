@@ -100,6 +100,11 @@ package defs is
   subtype J_rd is STD_LOGIC_VECTOR(11 downto 7);
   subtype J_opcode is STD_LOGIC_VECTOR(6 downto 0);
   
+  -- istructions format U
+  subtype U_imm_31_12 is STD_LOGIC_VECTOR(31 downto 12);
+  subtype U_rd is STD_LOGIC_VECTOR(11 downto 7);
+  subtype U_opcode is STD_LOGIC_VECTOR(6 downto 0);
+  
   subtype x_funct3 is STD_LOGIC_VECTOR(14 downto 12);
   
   constant select_imm_reg_arit : natural := 5;

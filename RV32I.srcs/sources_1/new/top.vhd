@@ -133,6 +133,7 @@ architecture Behavioral of top is
    
     --ALU
     signal ALU_result : STD_LOGIC_VECTOR (XLEN-1 downto 0);
+    signal ALU_src1 : STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal ALU_src2 : STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal imm_extended : STD_LOGIC_VECTOR (XLEN-1 downto 0);
     signal imm_splitted_store : STD_LOGIC_VECTOR (11 downto 0);
@@ -195,7 +196,7 @@ filt: clk_filter port map(clk_in => ext_clk,
                                src2_read => src2_RF_signal,
                                dest_write => dest_RF_signal);                          
     
-    my_alu: ALU port map(src1 => src1_RF_signal,
+    my_alu: ALU port map(src1 => ALU_src1,
                       src2 => ALU_src2,
                       dest => ALU_result,
                       beq => beq_signal,
@@ -228,6 +229,8 @@ filt: clk_filter port map(clk_in => ext_clk,
     begin 
         if(be_istruction(4) = '0' and be_istruction(5) = '1') then --store
             imm_extended <= std_logic_vector(resize(signed(imm_splitted_store), XLEN));
+        elsif(be_istruction(6 downto 0) = "0010111") then --auipc
+            imm_extended <= be_istruction(U_imm_31_12'range)&"000000000000";
         else
             imm_extended <= std_logic_vector(resize(signed(be_istruction(I_imm'range)), XLEN));
         end if;
@@ -336,12 +339,30 @@ filt: clk_filter port map(clk_in => ext_clk,
         
     end process;
     
-    --mux which decide if data to be written in RF is from memory(LOAD) or from ALU(add ecc) based on bit4 in opcode
-    mux_rfw_mem_alu: process(val_to_load_in_RF, ALU_result, be_istruction(6 downto 2), PC_plus_4_signal)
+     --mux which decide src1 ALU
+    mux_src1: process(PC_out_signal, src2_RF_signal, be_istruction)
     begin
-        if(be_istruction(6) = '1' and be_istruction(2) = '1') then --JAL AND JALR
+        if(be_istruction(6 downto 0) = "0010111") then  --AUIPC
+            ALU_src1 <= PC_out_signal;
+        else     
+            ALU_src1 <= src1_RF_signal;
+        end if;
+        
+    end process;
+    
+    --mux which decide if data to be written in RF is from memory(LOAD) or from ALU(add ecc) based on bit4 in opcode
+    mux_rfw_mem_alu: process(val_to_load_in_RF, ALU_result, be_istruction, PC_plus_4_signal)
+    begin
+        if(be_istruction(2) = '1') then
+            if(be_istruction(6) = '1') then --JAL AND JALR
                 dest_RF_signal <= PC_plus_4_signal;
-        else --no branch
+            elsif(be_istruction(6 downto 0) = "0010111") then --AUIPC
+                dest_RF_signal <= ALU_result;
+            else                            --LUI
+                dest_RF_signal <= be_istruction(U_imm_31_12'range)&"000000000000";
+            end if;
+                
+        else --no branch or lui 
             if(be_istruction(4) = '1') then
                 dest_RF_signal <= ALU_result;
             else

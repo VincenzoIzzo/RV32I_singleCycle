@@ -100,8 +100,7 @@ begin
     process(istr_6, istr_5, istr_4)
     begin
         if(istr_6 = '0') then -- no branch
-            if(istr_4 = '0' and istr_5 = '1') then
-            
+            if(istr_4 = '0' and istr_5 = '1') then    --STORE 
                 mem_write_en <= '1';
                 mem_RF_en <= '0';
             else
