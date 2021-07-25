@@ -48,9 +48,10 @@ entity memory is
 end memory;
 
 architecture Behavioral of memory is
-    
+
+    --ALL LITTLE ENDIAN    
+    --4096 bytes for now 
     signal memory_space: memory_space_t := (
---ALL LITTLE ENDIAN
 0 => x"130101FE",
 1 => x"232E8100",
 2 => x"13040102",
@@ -62,25 +63,12 @@ architecture Behavioral of memory is
 8 => x"832784FE",
 9 => x"B307F700",
 10 => x"2322F4FE",
-11 => x"6F000000", --jal
---11 => "01100111000000001100111100000000", --jalr
-
-
---11 => x"13000000",
---12 => x"032744FE",
---13 => x"93075000",
---14 => x"E30CF7FE",
---15 => x"93070000",
---16 => x"13850700",
---17 => x"0324C101",
---18 => x"13010102",
---19 => x"", return 
-
--- others
+11 => x"6F000000",
 others => (others => '1')
     );
-    signal al_istr_address : STD_LOGIC_VECTOR (5 downto 0);
-    signal al_data_address : STD_LOGIC_VECTOR (5 downto 0);
+    
+    signal al_istr_address : STD_LOGIC_VECTOR (9 downto 0);
+    signal al_data_address : STD_LOGIC_VECTOR (9 downto 0);
     
 begin
     --dbg_data <= memory_space(57)(27 downto 24);
@@ -89,8 +77,8 @@ begin
     --memory grows up-down with increasing address
     --little endian MEMORY
     --memory address always aligned on 4 byte and always give 32 bit as a response
-    al_istr_address <= istr_address(7 downto 2);
-    al_data_address <= data_address(7 downto 2);
+    al_istr_address <= istr_address(11 downto 2);
+    al_data_address <= data_address(11 downto 2);
     --istr_read and data_read exit as big endian, ready to be written in registers 
     istr_read <= memory_space(to_integer(unsigned(al_istr_address)));
     data_read <= memory_space(to_integer(unsigned(al_data_address)));

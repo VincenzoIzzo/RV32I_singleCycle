@@ -38,14 +38,13 @@ package defs is
   -- Processor register/address space width
   constant XLEN      : positive := 32;
   
-  -- Clk duration (max 63 given that i have 64 istr max in memory)
+  -- Clk duration
   constant clk_periods : positive := 31;
   
   
   -- Memory types
-  --type memory_space_t is array((2**XLEN)-1 downto 0) of STD_LOGIC_VECTOR(7 downto 0);
-  -- so it is implementable
-  type memory_space_t is array(63 downto 0) of STD_LOGIC_VECTOR(XLEN-1 downto 0);
+  --4096 bytes for now 
+  type memory_space_t is array(1023 downto 0) of STD_LOGIC_VECTOR(XLEN-1 downto 0);
     --to parametrize if RV64 
   constant zero_padding : STD_LOGIC_VECTOR(1 downto 0) := "00";
   
