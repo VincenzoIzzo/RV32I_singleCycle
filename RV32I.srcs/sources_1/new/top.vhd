@@ -340,7 +340,7 @@ filt: clk_filter port map(clk_in => ext_clk,
     end process;
     
      --mux which decide src1 ALU
-    mux_src1: process(PC_out_signal, src2_RF_signal, be_istruction)
+    mux_src1: process(PC_out_signal, src1_RF_signal, be_istruction)
     begin
         if(be_istruction(6 downto 0) = "0010111") then  --AUIPC
             ALU_src1 <= PC_out_signal;
