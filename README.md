@@ -3,6 +3,7 @@ This is a custom behavioral implementation (in VHDL) of RV32I specification inst
 
 
 ## How to simulate (top_tb.vhd)
+
 These steps are needed in order to simulate the default program loaded in the memory design.
 The program is compiled with RISC-V GNU toolchain (NewLib), compiled for I extension only with 32-bit soft-float ABI (floating-point registers are not currently implemented).
 ```
